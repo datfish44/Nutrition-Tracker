@@ -4,8 +4,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import requests
 
-CALORIE_LIMIT = 2500 #cals
-PROTEIN_GOAL = 150 #grams
+CALORIE_LIMIT = float(input("Enter your calorie limit")) #cals
+SUGAR_LIMIT = float(input("Enter your sugar limit (g)")) #grams
+PROTEIN_GOAL = float(input("Enter your protein goal (g)")) #grams
 
 today = []
 
@@ -39,7 +40,6 @@ while not done:
             data_list = response.json()
             if data_list and isinstance(data_list, list):
                 data = data_list[0]
-                print(data["calories"])
                 food = Food(data["name"], data["calories"], data["protein_g"], data["fat_total_g"], data["carbohydrates_total_g"], data["sugar_g"])
                 today.append(food)
                 print("Success! Added " + query)
@@ -53,24 +53,40 @@ while not done:
         carb_sum = sum(food.carbs for food in today)
         sugar_sum = sum(food.sugar for food in today)
 
-        if calories_sum <= CALORIE_LIMIT and protein_sum >= PROTEIN_GOAL:
+        one_goal = False
+
+        if calories_sum <= CALORIE_LIMIT and protein_sum >= PROTEIN_GOAL and  sugar_sum <= SUGAR_LIMIT:
             print("Good Job! All food goal met today.")
-        elif calories_sum < CALORIE_LIMIT:
-            print("Calorie goal achieved")
-        elif protein_sum >= PROTEIN_GOAL:
-            print("Protein goal achieved")
         else:
-            print("No food goals achieved today")
+            if calories_sum < CALORIE_LIMIT:
+                one_goal = True
+                print("Calorie goal achieved")
+            if protein_sum >= PROTEIN_GOAL:
+                one_goal = True
+                print("Protein goal achieved")
+            if sugar_sum <= SUGAR_LIMIT:
+                one_goal = True
+                print("Sugar goal achieved")
+            if not one_goal:
+                print("No food goals achieved today")
 
         #Graphs section
-        fig, axs = plt.subplots(1,2)
+        fig, axs = plt.subplots(2,2)
 
-        axs[0].pie([protein_sum, fat_sum, carb_sum, sugar_sum], labels=["Protein", "Fat", "Carbs", "Sugar"])
-        axs[0].set_title("Food Distribution")
-        axs[1].plot(list(range(len(today))), np.cumsum([food.calories for food in today]), label="Calories Eaten")
-        axs[1].plot(list(range(len(today))), [CALORIE_LIMIT] * len(today), label="Calorie Limit")
-        axs[1].legend()
-        axs[1].set_title("Calories Limit Progress")
+        axs[0,0].pie([protein_sum, fat_sum, carb_sum, sugar_sum], labels=["Protein", "Fat", "Carbs", "Sugar"])
+        axs[0,0].set_title("Food Distribution")
+        axs[0,1].plot(list(range(len(today))), np.cumsum([food.calories for food in today]), label="Calories Eaten")
+        axs[0,1].plot(list(range(len(today))), [CALORIE_LIMIT] * len(today), label="Calorie Limit")
+        axs[0, 1].legend()
+        axs[0, 1].set_title("Calorie Limit Progress")
+        axs[1,1].plot(list(range(len(today))), np.cumsum([food.sugar for food in today]), label = "Sugar Eaten")
+        axs[1,1].plot(list(range(len(today))), [SUGAR_LIMIT] * len(today), label = "Sugar Limit")
+        axs[1,1].legend()
+        axs[1,1].set_title("Sugar Limit Progress")
+        axs[1, 0].plot(list(range(len(today))), np.cumsum([food.protein for food in today]),label = "Protein Eaten")
+        axs[1, 0].plot(list(range(len(today))), [PROTEIN_GOAL] * len(today), label = "Protein Goal")
+        axs[1, 0].legend()
+        axs[1, 0].set_title("Protein Goal Progress")
 
         fig.tight_layout()
         plt.show()
